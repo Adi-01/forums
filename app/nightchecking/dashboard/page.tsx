@@ -1,4 +1,3 @@
-import React from "react";
 import { getDashboardData } from "@/lib/actions/truck.actions";
 import DashboardClient from "./DashboardClient";
 
@@ -7,6 +6,7 @@ export default async function DashboardPage() {
   // 1. Fetch data directly on the server
   // No useEffect, no loading state needed (server waits for data)
   const { success, data, error } = await getDashboardData();
+  // console.log("Dashboard data:", data);
 
   if (!success) {
     return (

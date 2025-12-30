@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import StatusBadge from "@/components/StatusBadge";
 import EditModal from "@/components/EditModal";
@@ -26,16 +26,11 @@ export default function DashboardClient({
   // -----------------------------
   // Client-only state
   // -----------------------------
-  const [records, setRecords] = useState<TruckRecord[]>([]);
+  const [records, setRecords] = useState<TruckRecord[]>(initialRecords || []);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [recordToEdit, setRecordToEdit] = useState<TruckRecord | null>(null);
   const [historyEditingId, setHistoryEditingId] = useState<string | null>(null);
   const [tempTime, setTempTime] = useState("");
-
-  // Populate records after mount to prevent hydration mismatch
-  useEffect(() => {
-    setRecords(initialRecords);
-  }, [initialRecords]);
 
   const activeRecords = records.filter((r) => r.status === "IN");
   const historyRecords = records.filter((r) => r.status === "OUT");
@@ -161,7 +156,7 @@ export default function DashboardClient({
                     </span>
                   </div>
                   <p className="text-sm text-zinc-400 mt-1">
-                    {record.inTime ? formatDateTime(record.inTime) : "—"}
+                    {formatDateTime(record.inTime)}
                   </p>
 
                   <div className="flex gap-2 mt-2 text-xs">

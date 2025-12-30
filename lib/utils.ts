@@ -8,8 +8,6 @@ export function cn(...inputs: ClassValue[]) {
 export const formatDateTime = (dateStr: string | null) => {
   if (!dateStr) return "-";
 
-  if (typeof window === "undefined") return "-"; // skip server formatting
-
   const date = new Date(dateStr);
 
   return date.toLocaleString("en-GB", {
@@ -18,6 +16,7 @@ export const formatDateTime = (dateStr: string | null) => {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
+    timeZone: "UTC", // <- ensures same string on server and client
   });
 };
 
