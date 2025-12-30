@@ -11,7 +11,7 @@ export default function proxy(request: NextRequest) {
 
   // 1️⃣ Root route: decide where to send the user
   if (pathname === "/") {
-    if (session) {
+    if (session?.value) {
       return NextResponse.redirect(new URL("/nightchecking", request.url));
     }
     return NextResponse.redirect(new URL("/login", request.url));
@@ -19,7 +19,7 @@ export default function proxy(request: NextRequest) {
 
   // 2️⃣ Login page
   if (pathname === "/login") {
-    if (session) {
+    if (session?.value) {
       // already logged in → go to dashboard
       return NextResponse.redirect(new URL("/nightchecking", request.url));
     }
@@ -28,7 +28,7 @@ export default function proxy(request: NextRequest) {
 
   // 3️⃣ Protected pages
   if (pathname.startsWith("/nightchecking")) {
-    if (!session) {
+    if (!session?.value) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
     return NextResponse.next();
