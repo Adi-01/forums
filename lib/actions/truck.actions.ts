@@ -5,9 +5,14 @@ import { createAdminClient } from "@/lib/appwrite";
 import { appwriteConfig } from "@/lib/appwrite/config";
 import { TruckRecord } from "@/types";
 import { formatVehicleNumber } from "../utils";
+import { revalidatePath } from "next/cache"; // 1. IMPORT THIS
+import { unstable_noStore as noStore } from "next/cache"; // 2. IMPORT THIS
 
 // 1. FETCH DATA (GET)
 export async function getDashboardData() {
+  // 3. DISABLE CACHE: Forces fresh data on every request
+  noStore();
+
   try {
     const { tables } = await createAdminClient();
 
@@ -15,12 +20,13 @@ export async function getDashboardData() {
       databaseId: appwriteConfig.databaseId,
       tableId: appwriteConfig.nightCheckingTableId,
       queries: [
-        Query.orderDesc("$createdAt"), // Show newest first
-        Query.limit(20), // Limit as requested
+        Query.orderDesc("$createdAt"),
+        // CRITICAL WARNING: This limit might be hiding your "Inside" trucks!
+        // See explanation below code block.
+        Query.limit(50),
       ],
     });
 
-    // Map Appwrite documents to your TruckRecord type
     const mappedRecords: TruckRecord[] = res.rows.map((doc: any) => ({
       id: doc.$id,
       truckNumber: doc.TruckNumber,
@@ -31,7 +37,6 @@ export async function getDashboardData() {
       remarks: doc.Remarks,
       status: doc.Status,
       selfOut: doc.SelfOut || undefined,
-      // Map system timestamps to your specific time fields
       inTime: doc.$createdAt,
       outTime: doc.Status === "OUT" ? doc.$updatedAt : undefined,
     }));
@@ -50,7 +55,7 @@ export async function getDashboardData() {
   }
 }
 
-// 2. MARK EXIT (UPDATE) - Reusing/Refining for this context
+// 2. MARK EXIT (UPDATE)
 export async function markTruckExit(documentId: string) {
   try {
     const { tables } = await createAdminClient();
@@ -64,6 +69,11 @@ export async function markTruckExit(documentId: string) {
       },
     });
 
+    // 4. PURGE CACHE: Tells Next.js "Data changed, reload the page content"
+    revalidatePath("/");
+    // If your dashboard is at /dashboard, uncomment the next line too:
+    revalidatePath("/nightchecking/dashboard");
+
     return {
       success: true,
       data: res,
@@ -75,8 +85,6 @@ export async function markTruckExit(documentId: string) {
     };
   }
 }
-
-// ... existing imports
 
 type UpdateEntryParams = {
   documentId: string;
@@ -105,6 +113,9 @@ export async function updateTruckEntry(data: UpdateEntryParams) {
         Remarks: data.Remarks,
       },
     });
+
+    // 5. PURGE CACHE HERE TOO
+    revalidatePath("/");
 
     return { success: true, data: res };
   } catch (error: any) {

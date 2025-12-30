@@ -1,5 +1,6 @@
 import { getDashboardData } from "@/lib/actions/truck.actions";
 import DashboardClient from "./DashboardClient";
+export const dynamic = "force-dynamic";
 
 // This is now an ASYNC Server Component
 export default async function DashboardPage() {
