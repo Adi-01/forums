@@ -32,11 +32,8 @@ export async function getDashboardData() {
       status: doc.Status,
       selfOut: doc.SelfOut || undefined,
       // Map system timestamps to your specific time fields
-      inTime: new Date(doc.$createdAt).toLocaleString(),
-      outTime:
-        doc.Status === "OUT"
-          ? new Date(doc.$updatedAt).toLocaleString()
-          : undefined,
+      inTime: doc.$createdAt,
+      outTime: doc.Status === "OUT" ? doc.$updatedAt : undefined,
     }));
 
     return {
