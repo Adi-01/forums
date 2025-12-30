@@ -16,7 +16,7 @@ export const formatDateTime = (dateStr: string | null) => {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
-    timeZone: "UTC", // <- ensures same string on server and client
+    timeZone: "Asia/Kolkata", // <- ensures same string on server and client
   });
 };
 
