@@ -144,3 +144,8 @@ export async function loginAction(email: string, password: string) {
     };
   }
 }
+
+export async function isLoggedIn() {
+  const cookieStore = await cookies();
+  return !!cookieStore.get("appwrite-session");
+}

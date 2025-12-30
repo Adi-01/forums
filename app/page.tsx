@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { loginAction } from "@/lib/actions/user.actions";
+import { isLoggedIn, loginAction } from "@/lib/actions/user.actions";
 import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginForm() {
@@ -10,6 +10,14 @@ export default function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    isLoggedIn().then((loggedIn) => {
+      if (loggedIn) {
+        router.replace("/nightchecking");
+      }
+    });
+  }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
