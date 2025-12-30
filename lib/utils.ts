@@ -6,7 +6,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 // --- Helpers ---
 export const formatDateTime = (dateStr: string | null) => {
-  if (!dateStr) return "N/A";
+  if (!dateStr) return "-";
 
   const date = new Date(dateStr);
 

@@ -162,8 +162,9 @@ export default function DashboardClient({
                     </span>
                   </div>
                   <p className="text-sm text-zinc-400 mt-1">
-                    {formatDateTime(record.inTime)}
+                    {record.inTime ? formatDateTime(record.inTime) : "—"}
                   </p>
+
                   <div className="flex gap-2 mt-2 text-xs">
                     <StatusBadge label="Paper" status={record.paperStatus} />
                     <StatusBadge label="Driver" status={record.driverStatus} />
