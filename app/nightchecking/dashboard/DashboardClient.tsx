@@ -155,9 +155,6 @@ export default function DashboardClient({
                       {record.transporter}
                     </span>
                   </div>
-                  <p className="text-sm text-zinc-400 mt-1">
-                    {formatDateTime(record.inTime)}
-                  </p>
 
                   <div className="flex gap-2 mt-2 text-xs">
                     <StatusBadge label="Paper" status={record.paperStatus} />
