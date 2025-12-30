@@ -5,11 +5,7 @@ import Link from "next/link";
 import StatusBadge from "@/components/StatusBadge";
 import EditModal from "@/components/EditModal";
 import { TruckRecord } from "@/types";
-import {
-  getDashboardData,
-  markTruckExit,
-  updateTruckEntry,
-} from "@/lib/actions/truck.actions";
+import { markTruckExit, updateTruckEntry } from "@/lib/actions/truck.actions";
 import { formatDateTime } from "@/lib/utils";
 import { updateTruckExitTime } from "@/lib/actions/user.actions";
 import { PlusIcon } from "lucide-react";
@@ -86,10 +82,6 @@ export default function DashboardClient({
     if (!response.success) {
       alert("Failed to update status.");
       setRecords(previousRecords);
-    } else {
-      // Refetch updated data from backend
-      const { success, data } = await getDashboardData();
-      if (success) setRecords(data || []);
     }
   };
 
@@ -163,6 +155,9 @@ export default function DashboardClient({
                       {record.transporter}
                     </span>
                   </div>
+                  <p className="text-sm text-zinc-400 mt-1">
+                    {formatDateTime(record.inTime)}
+                  </p>
 
                   <div className="flex gap-2 mt-2 text-xs">
                     <StatusBadge label="Paper" status={record.paperStatus} />
