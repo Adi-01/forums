@@ -6,7 +6,7 @@ export const config = {
   matcher: ["/", "/nightchecking/:path*"],
 };
 
-export function proxy(request: NextRequest) {
+export default function proxy(request: NextRequest) {
   const session = request.cookies.get("appwrite-session");
   const { pathname } = request.nextUrl;
 
