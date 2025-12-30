@@ -5,7 +5,11 @@ import Link from "next/link";
 import StatusBadge from "@/components/StatusBadge";
 import EditModal from "@/components/EditModal";
 import { TruckRecord } from "@/types";
-import { markTruckExit, updateTruckEntry } from "@/lib/actions/truck.actions";
+import {
+  getDashboardData,
+  markTruckExit,
+  updateTruckEntry,
+} from "@/lib/actions/truck.actions";
 import { formatDateTime } from "@/lib/utils";
 import { updateTruckExitTime } from "@/lib/actions/user.actions";
 import { PlusIcon } from "lucide-react";
@@ -82,6 +86,10 @@ export default function DashboardClient({
     if (!response.success) {
       alert("Failed to update status.");
       setRecords(previousRecords);
+    } else {
+      // Refetch updated data from backend
+      const { success, data } = await getDashboardData();
+      if (success) setRecords(data || []);
     }
   };
 
