@@ -63,14 +63,14 @@ export async function markTruckExit(documentId: string) {
   try {
     const { tables } = await createAdminClient();
 
-    const res = await tables.updateRow(
-      appwriteConfig.databaseId,
-      appwriteConfig.nightCheckingTableId,
-      documentId,
-      {
+    const res = await tables.updateRow({
+      databaseId: appwriteConfig.databaseId,
+      tableId: appwriteConfig.nightCheckingTableId,
+      rowId: documentId,
+      data: {
         Status: "OUT",
-      }
-    );
+      },
+    });
 
     return {
       success: true,
@@ -88,16 +88,16 @@ export async function markTruckExit(documentId: string) {
 
 export async function updateTruckExitTime(documentId: string, newTime: string) {
   try {
-    const { databases } = await createAdminClient();
+    const { tables } = await createAdminClient();
 
-    const res = await databases.updateDocument(
-      appwriteConfig.databaseId,
-      appwriteConfig.nightCheckingTableId, // Ensure this matches your config key
-      documentId,
-      {
+    const res = await tables.updateRow({
+      databaseId: appwriteConfig.databaseId,
+      tableId: appwriteConfig.nightCheckingTableId, // Ensure this matches your config key
+      rowId: documentId,
+      data: {
         SelfOut: newTime, // We only update this specific field
-      }
-    );
+      },
+    });
 
     return {
       success: true,
@@ -117,7 +117,10 @@ export async function loginAction(email: string, password: string) {
     const { account } = await createAdminClient();
 
     // Create email session
-    const session = await account.createEmailPasswordSession(email, password);
+    const session = await account.createEmailPasswordSession({
+      email,
+      password,
+    });
 
     // Set session cookie (HttpOnly)
     const cookieStore = await cookies();
