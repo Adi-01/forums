@@ -8,6 +8,8 @@ export function cn(...inputs: ClassValue[]) {
 export const formatDateTime = (dateStr: string | null) => {
   if (!dateStr) return "-";
 
+  if (typeof window === "undefined") return "-"; // skip server formatting
+
   const date = new Date(dateStr);
 
   return date.toLocaleString("en-GB", {
@@ -15,7 +17,7 @@ export const formatDateTime = (dateStr: string | null) => {
     month: "short",
     hour: "numeric",
     minute: "2-digit",
-    hour12: true, // Forces AM/PM format even with en-GB locale
+    hour12: true,
   });
 };
 

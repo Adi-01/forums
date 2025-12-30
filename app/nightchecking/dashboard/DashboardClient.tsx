@@ -1,14 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import StatusBadge from "@/components/StatusBadge";
-import EditModal from "@/components/EditModal"; // Import the modal
+import EditModal from "@/components/EditModal";
 import { TruckRecord } from "@/types";
-import {
-  markTruckExit,
-  updateTruckEntry, // Import the new server action
-} from "@/lib/actions/truck.actions";
+import { markTruckExit, updateTruckEntry } from "@/lib/actions/truck.actions";
 import { formatDateTime } from "@/lib/utils";
 import { updateTruckExitTime } from "@/lib/actions/user.actions";
 import { PlusIcon } from "lucide-react";
@@ -26,38 +23,40 @@ export default function DashboardClient({
 }: {
   initialRecords: TruckRecord[];
 }) {
-  const [records, setRecords] = useState<TruckRecord[]>(initialRecords);
-
-  // State for Editing Active Record
+  // -----------------------------
+  // Client-only state
+  // -----------------------------
+  const [records, setRecords] = useState<TruckRecord[]>([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [recordToEdit, setRecordToEdit] = useState<TruckRecord | null>(null);
-
-  // State for Editing History Time
   const [historyEditingId, setHistoryEditingId] = useState<string | null>(null);
   const [tempTime, setTempTime] = useState("");
+
+  // Populate records after mount to prevent hydration mismatch
+  useEffect(() => {
+    setRecords(initialRecords);
+  }, [initialRecords]);
 
   const activeRecords = records.filter((r) => r.status === "IN");
   const historyRecords = records.filter((r) => r.status === "OUT");
 
-  // --- HANDLER: OPEN EDIT MODAL ---
+  // -----------------------------
+  // Handlers
+  // -----------------------------
   const handleEditClick = (record: TruckRecord) => {
     setRecordToEdit(record);
     setIsEditModalOpen(true);
   };
 
-  // --- HANDLER: SAVE EDITED DATA (Server Action) ---
   const handleSaveEdit = async (
     id: string,
     updatedData: Partial<TruckRecord>
   ) => {
     const previousRecords = [...records];
-
-    // 1. Optimistic Update
     setRecords((prev) =>
       prev.map((r) => (r.id === id ? { ...r, ...updatedData } : r))
     );
 
-    // 2. Call Server
     const response = await updateTruckEntry({
       documentId: id,
       TruckNumber: updatedData.truckNumber!,
@@ -68,14 +67,12 @@ export default function DashboardClient({
       Remarks: updatedData.remarks || "",
     });
 
-    // 3. Rollback if failed
     if (!response.success) {
       alert("Update failed: " + response.error);
       setRecords(previousRecords);
     }
   };
 
-  // --- HANDLER: MARK OUT (Existing) ---
   const handleExit = async (id: string) => {
     const previousRecords = [...records];
     setRecords((prev) =>
@@ -93,7 +90,6 @@ export default function DashboardClient({
     }
   };
 
-  // --- HANDLER: UPDATE HISTORY TIME (Existing) ---
   const handleTimeUpdate = async (id: string) => {
     if (!tempTime) return;
     const previousRecords = [...records];
@@ -111,9 +107,12 @@ export default function DashboardClient({
     }
   };
 
+  // -----------------------------
+  // Render
+  // -----------------------------
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      {/* Edit Modal (Hidden unless open) */}
+      {/* Edit Modal */}
       {recordToEdit && (
         <EditModal
           isOpen={isEditModalOpen}
@@ -128,13 +127,13 @@ export default function DashboardClient({
         <h1 className="text-2xl font-bold text-indigo-400">Dashboard</h1>
         <Link
           href="/nightchecking"
-          className=" flex flex-row justify-between items-center gap-1 mt-4 sm:mt-0 px-4 py-2 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors"
+          className="flex flex-row justify-between items-center gap-1 mt-4 sm:mt-0 px-4 py-2 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors"
         >
           New Entry <PlusIcon size={18} />
         </Link>
       </div>
 
-      {/* Active Vehicles Section */}
+      {/* Active Vehicles */}
       <section>
         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
           <span className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></span>
@@ -175,9 +174,7 @@ export default function DashboardClient({
                   </div>
                 </div>
 
-                {/* BUTTON GROUP */}
                 <div className="flex items-center gap-2 w-full sm:w-auto">
-                  {/* EDIT BUTTON */}
                   <button
                     onClick={() => handleEditClick(record)}
                     className="px-4 py-2 border border-zinc-600 text-zinc-300 hover:bg-zinc-700 hover:text-white rounded font-medium text-sm transition-colors"
@@ -185,7 +182,6 @@ export default function DashboardClient({
                     Edit
                   </button>
 
-                  {/* MARK OUT BUTTON */}
                   <button
                     onClick={() => handleExit(record.id)}
                     className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium text-sm transition-colors shadow-lg shadow-red-900/20"
@@ -199,7 +195,7 @@ export default function DashboardClient({
         )}
       </section>
 
-      {/* History Table (Unchanged Logic, just simplified JSX for brevity) */}
+      {/* History Table */}
       {historyRecords.length > 0 && (
         <section className="opacity-75 pt-8 border-t border-zinc-800">
           <h2 className="text-xl font-semibold mb-4 text-zinc-400">
