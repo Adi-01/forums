@@ -153,7 +153,7 @@ export default function EntryPage() {
                   : "bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/20"
               }`}
             >
-              {isSubmitting ? "Processing..." : "Check In"}
+              {isSubmitting ? "Processing..." : "Submit"}
             </button>
           </div>
         </form>
