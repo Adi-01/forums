@@ -97,9 +97,12 @@ export default function EditModal({
                 <option value="NEW SHIV">NEW SHIV</option>
                 <option value="KRUPALI">KRUPALI</option>
                 <option value="MURLIDHAR">MURLIDHAR</option>
-                <option value="BHAGIRATH">BHAGIRATH</option>
-                <option value="T-Logistics">T-Logistics</option>
-                <option value="Fast-Movers">Fast-Movers</option>
+                <option value="SATYAM">SATYAM</option>
+                <option value="YOGESHWAR">YOGESHWAR</option>
+                <option value="SHAKTI">SHAKTI</option>
+                <option value="MARUTI">MARUTI</option>
+                <option value="DIVYADEEP">DIVYADEEP</option>
+                <option value="OWN TRANSPORT">OWN TRANSPORT</option>
               </select>
             </label>
           </div>

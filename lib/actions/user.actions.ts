@@ -1,7 +1,7 @@
 "use server";
 
 import { ID } from "node-appwrite";
-import { createAdminClient } from "@/lib/appwrite"; // Adjust path to your client
+import { createAdminClient, createSessionClient } from "@/lib/appwrite"; // Adjust path to your client
 import { appwriteConfig } from "@/lib/appwrite/config"; // Adjust path to your config
 import { formatVehicleNumber } from "../utils";
 import { cookies } from "next/headers";
@@ -142,5 +142,14 @@ export async function loginAction(email: string, password: string) {
       success: false,
       error: error?.message || "Login failed",
     };
+  }
+}
+
+export async function getCurrentUser() {
+  try {
+    const { account } = await createSessionClient();
+    return await account.get();
+  } catch (error) {
+    return null;
   }
 }
