@@ -256,7 +256,7 @@ export default function DashboardClient({
                                   setTempTime(toInputFormat(displayTime));
                                   setHistoryEditingId(record.id);
                                 }}
-                                className="opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-indigo-400"
+                                className="text-blue-400"
                               >
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
