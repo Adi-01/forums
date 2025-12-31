@@ -1,7 +1,11 @@
 import { getDashboardData } from "@/lib/actions/truck.actions";
 import DashboardClient from "./DashboardClient";
+import { logout } from "@/lib/actions/user.actions";
 export const dynamic = "force-dynamic";
-
+export async function logoutAction() {
+  "use server";
+  await logout();
+}
 // This is now an ASYNC Server Component
 export default async function DashboardPage() {
   // 1. Fetch data directly on the server
@@ -23,7 +27,10 @@ export default async function DashboardPage() {
   // 2. Pass data to the Client Component
   return (
     <main className="min-h-screen p-6 bg-linear-to-b from-zinc-900 to-black text-zinc-100">
-      <DashboardClient initialRecords={data || []} />
+      <DashboardClient
+        initialRecords={data || []}
+        logoutAction={logoutAction}
+      />
     </main>
   );
 }

@@ -5,6 +5,7 @@ import { createAdminClient, createSessionClient } from "@/lib/appwrite"; // Adju
 import { appwriteConfig } from "@/lib/appwrite/config"; // Adjust path to your config
 import { formatVehicleNumber } from "../utils";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 // Type definition for the data coming from the frontend form
 type CreateEntryParams = {
@@ -129,7 +130,7 @@ export async function loginAction(email: string, password: string) {
       secure: true,
       sameSite: "strict",
       path: "/",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24 * 30, // 7 days
     });
 
     return {
@@ -151,5 +152,18 @@ export async function getCurrentUser() {
     return await account.get();
   } catch (error) {
     return null;
+  }
+}
+
+export async function logout() {
+  try {
+    const { account } = await createSessionClient(); // Session client reads cookie
+    await account.deleteSession({ sessionId: "current" });
+    (await cookies()).delete("appwrite-session");
+    return { ok: true };
+  } catch (err: any) {
+    return { ok: false, message: err };
+  } finally {
+    redirect("/login");
   }
 }

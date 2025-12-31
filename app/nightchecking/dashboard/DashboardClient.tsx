@@ -20,8 +20,10 @@ const toInputFormat = (isoString?: string) => {
 
 export default function DashboardClient({
   initialRecords,
+  logoutAction,
 }: {
   initialRecords: TruckRecord[];
+  logoutAction: () => Promise<void>;
 }) {
   // -----------------------------
   // Client-only state
@@ -118,14 +120,39 @@ export default function DashboardClient({
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-center bg-zinc-800/50 p-4 rounded-lg border border-zinc-700 backdrop-blur">
-        <h1 className="text-2xl font-bold text-indigo-400">Dashboard</h1>
-        <Link
-          href="/nightchecking"
-          className="flex flex-row justify-between items-center gap-1 mt-4 sm:mt-0 px-4 py-2 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors"
-        >
-          New Entry <PlusIcon size={18} />
-        </Link>
+      <div
+        className="flex flex-row justify-between items-center
+                bg-zinc-800/50 p-4 rounded-lg
+                border border-zinc-700 backdrop-blur"
+      >
+        <h1 className="text-xl sm:text-2xl font-bold text-indigo-400">
+          Dashboard
+        </h1>
+
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Link
+            href="/nightchecking"
+            className="flex items-center gap-1
+                 px-3 sm:px-4 py-2
+                 rounded bg-indigo-600 hover:bg-indigo-500
+                 text-white text-xs sm:text-sm font-medium
+                 transition-colors"
+          >
+            New <PlusIcon size={16} className="sm:size-4.5" />
+          </Link>
+
+          <form action={logoutAction}>
+            <button
+              type="submit"
+              className="px-3 sm:px-4 py-2
+                   rounded bg-red-600 hover:bg-red-700
+                   text-white text-xs sm:text-sm font-medium
+                   transition-colors"
+            >
+              Logout
+            </button>
+          </form>
+        </div>
       </div>
 
       {/* Active Vehicles */}
