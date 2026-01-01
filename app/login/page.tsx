@@ -1,19 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { loginAction } from "@/lib/actions/user.actions";
 import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const next = searchParams.get("next") || "/nightchecking";
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
-  useEffect(() => {
-    router.replace("/");
-  }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -32,8 +32,8 @@ export default function LoginForm() {
       return;
     }
 
-    // console.log("Login successful");
-    router.push("/nightchecking");
+    // ✅ Respect original intent
+    router.replace(next);
   }
 
   return (
@@ -56,7 +56,7 @@ export default function LoginForm() {
             type="email"
             name="email"
             required
-            className="w-full px-3 py-2 bg-black border border-white/60 text-white rounded-md focus:outline-none focus:border-blue-400"
+            className="w-full px-3 py-2 bg-black border border-white/60 text-white rounded-md"
           />
         </div>
 
@@ -68,13 +68,13 @@ export default function LoginForm() {
               type={showPassword ? "text" : "password"}
               name="password"
               required
-              className="w-full px-3 py-2 bg-black border border-white/60 text-white rounded-md focus:outline-none focus:border-blue-400"
+              className="w-full px-3 py-2 bg-black border border-white/60 text-white rounded-md"
             />
 
             <button
               type="button"
-              onClick={() => setShowPassword((prev) => !prev)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 text-sm hover:text-white transition"
+              onClick={() => setShowPassword((p) => !p)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70"
             >
               {showPassword ? <EyeOff /> : <Eye />}
             </button>
@@ -84,7 +84,7 @@ export default function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-500 text-white/90 font-semibold py-2 rounded-md disabled:opacity-50 transition"
+          className="w-full bg-blue-600 text-white py-2 rounded-md disabled:opacity-50"
         >
           {loading ? "Logging in..." : "Login"}
         </button>
