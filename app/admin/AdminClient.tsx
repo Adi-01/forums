@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TruckRecord } from "@/types";
 import { formatDateTime } from "@/lib/utils";
@@ -42,6 +42,17 @@ export default function AdminClient({
   // Edit State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [recordToEdit, setRecordToEdit] = useState<TruckRecord | null>(null);
+  useEffect(() => {
+    const navEntries = performance.getEntriesByType(
+      "navigation"
+    ) as PerformanceNavigationTiming[];
+
+    const navType = navEntries[0]?.type;
+
+    if (navType !== "reload") {
+      window.location.reload();
+    }
+  }, []);
 
   // --- HANDLER: REFRESH ---
   const handleRefresh = () => {
