@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/actions/user.actions"; // Import the new f
 import AdminClient from "./AdminClient";
 import Link from "next/link";
 import { ShieldAlert } from "lucide-react";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,11 @@ export default async function AdminPage() {
 
   if (!isAdmin) {
     return <AccessDenied />;
+  }
+
+  if (!user) {
+    // Tell login page to send us back here
+    redirect("/login?next=/admin");
   }
 
   // 2. Fetch Data (Only runs if admin)

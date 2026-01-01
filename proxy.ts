@@ -2,15 +2,14 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export const config = {
-  // ✅ FIX: Add "/admin" to the matcher so this file actually runs!
   matcher: ["/", "/login", "/nightchecking/:path*", "/admin"],
 };
 
 export default function proxy(request: NextRequest) {
   const session = request.cookies.get("appwrite-session");
-  const { pathname } = request.nextUrl;
+  const { pathname, searchParams } = request.nextUrl; // Get searchParams here
 
-  // 1️⃣ Root route: decide where to send the user
+  // 1️⃣ Root route
   if (pathname === "/") {
     if (session?.value) {
       return NextResponse.redirect(new URL("/nightchecking", request.url));
@@ -18,10 +17,15 @@ export default function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // 2️⃣ Login page
+  // 2️⃣ Login page (THE FIX)
   if (pathname === "/login") {
     if (session?.value) {
-      // already logged in → go to dashboard
+      // If we have a 'next' parameter (e.g., /login?next=/admin), go there!
+      const nextUrl = searchParams.get("next");
+      if (nextUrl) {
+        return NextResponse.redirect(new URL(nextUrl, request.url));
+      }
+      // Otherwise, default to dashboard
       return NextResponse.redirect(new URL("/nightchecking", request.url));
     }
     return NextResponse.next();
@@ -30,22 +34,19 @@ export default function proxy(request: NextRequest) {
   // 3️⃣ Protected pages (Nightchecking)
   if (pathname.startsWith("/nightchecking")) {
     if (!session?.value) {
-      return NextResponse.redirect(new URL("/login", request.url));
+      // Pass the current page as 'next' so they come back after login
+      return NextResponse.redirect(
+        new URL(`/login?next=${pathname}`, request.url)
+      );
     }
     return NextResponse.next();
   }
 
   // 4️⃣ Protected pages (Admin)
   if (pathname === "/admin") {
-    // If NOT logged in, kick to login immediately
     if (!session?.value) {
-      return NextResponse.redirect(new URL("/login", request.url));
+      return NextResponse.redirect(new URL("/login?next=/admin", request.url));
     }
-
-    // ⚡ PERFORMANCE NOTE:
-    // We only check if the user is "Logged In" here.
-    // We let the Server Component handle the "Is Admin" label check.
-    // Why? Checking labels here requires an API call which makes the site slow.
     return NextResponse.next();
   }
 
