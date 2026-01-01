@@ -130,7 +130,7 @@ export async function loginAction(email: string, password: string) {
       secure: true,
       sameSite: "strict",
       path: "/",
-      maxAge: 60 * 60 * 24 * 30, // 7 days
+      maxAge: 60 * 60 * 24 * 30, // 30 days
     });
 
     return {
