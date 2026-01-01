@@ -2,14 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { loginAction } from "@/lib/actions/user.actions";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 export default function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
 
-  // ✅ 1️⃣ CLIENT-SIDE SESSION CHECK (VERY IMPORTANT)
+  // 🔐 Check existing session on mount
   useEffect(() => {
     let cancelled = false;
 
@@ -20,17 +21,21 @@ export default function LoginForm() {
           credentials: "include",
         });
 
-        if (!res.ok) return;
+        if (res.ok) {
+          const params = new URLSearchParams(window.location.search);
+          const next = params.get("next") || "/nightchecking";
 
-        // Already logged in → redirect
-        const params = new URLSearchParams(window.location.search);
-        const next = params.get("next") || "/nightchecking";
-
-        if (!cancelled) {
-          window.location.replace(next);
+          if (!cancelled) {
+            window.location.replace(next);
+          }
+          return;
         }
       } catch {
-        // Not logged in → stay on login
+        // ignore
+      } finally {
+        if (!cancelled) {
+          setCheckingSession(false);
+        }
       }
     }
 
@@ -41,7 +46,19 @@ export default function LoginForm() {
     };
   }, []);
 
-  // ✅ 2️⃣ LOGIN HANDLER
+  // 🧠 BLOCK UI while checking session
+  if (checkingSession) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="flex flex-col items-center gap-3 text-zinc-400">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="text-sm">Checking session…</span>
+        </div>
+      </div>
+    );
+  }
+
+  // 🔑 Handle login submit
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
@@ -59,7 +76,6 @@ export default function LoginForm() {
       return;
     }
 
-    // Respect ?next= after login
     const params = new URLSearchParams(window.location.search);
     const next = params.get("next") || "/nightchecking";
 
@@ -116,7 +132,7 @@ export default function LoginForm() {
           disabled={loading}
           className="w-full bg-blue-600 hover:bg-blue-500 text-white/90 font-semibold py-2 rounded-md disabled:opacity-50 transition"
         >
-          {loading ? "Logging in..." : "Login"}
+          {loading ? "Logging in…" : "Login"}
         </button>
       </form>
     </div>
