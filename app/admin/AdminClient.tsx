@@ -42,17 +42,42 @@ export default function AdminClient({
   // Edit State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [recordToEdit, setRecordToEdit] = useState<TruckRecord | null>(null);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   useEffect(() => {
-    const navEntries = performance.getEntriesByType(
-      "navigation"
-    ) as PerformanceNavigationTiming[];
+    let cancelled = false;
 
-    const navType = navEntries[0]?.type;
+    async function checkAdmin() {
+      try {
+        const res = await fetch("/api/me", {
+          cache: "no-store",
+          credentials: "include",
+        });
 
-    if (navType !== "reload") {
-      window.location.reload();
+        if (!res.ok) {
+          // 401 or 403
+          router.replace("/login?next=/admin");
+          return;
+        }
+
+        if (!cancelled) {
+          setIsAuthorized(true);
+        }
+      } catch {
+        router.replace("/login?next=/admin");
+      } finally {
+        if (!cancelled) {
+          setIsCheckingAuth(false);
+        }
+      }
     }
-  }, []);
+
+    checkAdmin();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
 
   // --- HANDLER: REFRESH ---
   const handleRefresh = () => {
@@ -168,6 +193,18 @@ export default function AdminClient({
       router.refresh();
     }
   };
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-zinc-400">
+        Verifying admin access…
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
+    return null; // Redirect already triggered
+  }
 
   return (
     <div className="space-y-6">
