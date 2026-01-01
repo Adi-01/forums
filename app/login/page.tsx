@@ -1,16 +1,47 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { loginAction } from "@/lib/actions/user.actions";
 import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginForm() {
-  const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // ✅ 1️⃣ CLIENT-SIDE SESSION CHECK (VERY IMPORTANT)
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkSession() {
+      try {
+        const res = await fetch("/api/me", {
+          cache: "no-store",
+          credentials: "include",
+        });
+
+        if (!res.ok) return;
+
+        // Already logged in → redirect
+        const params = new URLSearchParams(window.location.search);
+        const next = params.get("next") || "/nightchecking";
+
+        if (!cancelled) {
+          window.location.replace(next);
+        }
+      } catch {
+        // Not logged in → stay on login
+      }
+    }
+
+    checkSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // ✅ 2️⃣ LOGIN HANDLER
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
@@ -28,8 +59,11 @@ export default function LoginForm() {
       return;
     }
 
-    // console.log("Login successful");
-    router.push("/nightchecking");
+    // Respect ?next= after login
+    const params = new URLSearchParams(window.location.search);
+    const next = params.get("next") || "/nightchecking";
+
+    window.location.replace(next);
   }
 
   return (
@@ -70,7 +104,7 @@ export default function LoginForm() {
             <button
               type="button"
               onClick={() => setShowPassword((prev) => !prev)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 text-sm hover:text-white transition"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition"
             >
               {showPassword ? <EyeOff /> : <Eye />}
             </button>
