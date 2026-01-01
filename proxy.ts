@@ -18,17 +18,9 @@ export default function proxy(request: NextRequest) {
   }
 
   // 2️⃣ Login page (THE FIX)
-  if (pathname === "/login") {
-    if (session?.value) {
-      // If we have a 'next' parameter (e.g., /login?next=/admin), go there!
-      const nextUrl = searchParams.get("next");
-      if (nextUrl) {
-        return NextResponse.redirect(new URL(nextUrl, request.url));
-      }
-      // Otherwise, default to dashboard
-      return NextResponse.redirect(new URL("/nightchecking", request.url));
-    }
-    return NextResponse.next();
+  if (pathname === "/login" && session?.value) {
+    const nextUrl = searchParams.get("next") ?? "/nightchecking";
+    return NextResponse.redirect(new URL(nextUrl, request.url));
   }
 
   // 3️⃣ Protected pages (Nightchecking)

@@ -8,22 +8,19 @@ import { redirect } from "next/navigation";
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
-  // 1. SECURITY CHECK
   const user = await getCurrentUser();
 
-  // Check if user exists AND has the "admin" label
-  const isAdmin = user && user.labels.includes("admin");
-
-  if (!isAdmin) {
-    return <AccessDenied />;
-  }
-
+  // 1️⃣ If not logged in → login
   if (!user) {
-    // Tell login page to send us back here
     redirect("/login?next=/admin");
   }
 
-  // 2. Fetch Data (Only runs if admin)
+  // 2️⃣ If logged in but not admin → deny
+  if (!user.labels?.includes("admin")) {
+    return <AccessDenied />;
+  }
+
+  // 3️⃣ Only admins reach here
   const { success, data, error } = await getAllTrucks();
 
   if (!success) {
@@ -36,21 +33,7 @@ export default async function AdminPage() {
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex justify-between items-center border-b border-zinc-800 pb-6">
-          <h1 className="text-3xl font-bold text-indigo-500">Master Records</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-zinc-500 text-sm">
-              {data?.length} Entries Found
-            </span>
-            <span className="px-2 py-1 rounded bg-indigo-900/30 text-indigo-400 text-xs border border-indigo-800">
-              Admin Mode
-            </span>
-          </div>
-        </div>
-
-        <AdminClient initialRecords={data || []} />
-      </div>
+      <AdminClient initialRecords={data || []} />
     </main>
   );
 }
