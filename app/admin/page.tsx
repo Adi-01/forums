@@ -10,13 +10,8 @@ export const dynamic = "force-dynamic";
 export default async function AdminPage() {
   const user = await getCurrentUser();
 
-  // 1️⃣ If not logged in → login
-  if (!user) {
-    redirect("/login?next=/admin");
-  }
-
   // 2️⃣ If logged in but not admin → deny
-  if (!user.labels?.includes("admin")) {
+  if (!user?.labels?.includes("admin")) {
     return <AccessDenied />;
   }
 

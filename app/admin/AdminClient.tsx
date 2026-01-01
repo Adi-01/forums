@@ -42,42 +42,42 @@ export default function AdminClient({
   // Edit State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [recordToEdit, setRecordToEdit] = useState<TruckRecord | null>(null);
-  const [isAuthorized, setIsAuthorized] = useState(false);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  useEffect(() => {
-    let cancelled = false;
+  // const [isAuthorized, setIsAuthorized] = useState(false);
+  // const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  // useEffect(() => {
+  //   let cancelled = false;
 
-    async function checkAdmin() {
-      try {
-        const res = await fetch("/api/me", {
-          cache: "no-store",
-          credentials: "include",
-        });
+  //   async function checkAdmin() {
+  //     try {
+  //       const res = await fetch("/api/me", {
+  //         cache: "no-store",
+  //         credentials: "include",
+  //       });
 
-        if (!res.ok) {
-          // 401 or 403
-          router.replace("/login?next=/admin");
-          return;
-        }
+  //       if (!res.ok) {
+  //         // 401 or 403
+  //         router.replace("/login?next=/admin");
+  //         return;
+  //       }
 
-        if (!cancelled) {
-          setIsAuthorized(true);
-        }
-      } catch {
-        router.replace("/login?next=/admin");
-      } finally {
-        if (!cancelled) {
-          setIsCheckingAuth(false);
-        }
-      }
-    }
+  //       if (!cancelled) {
+  //         setIsAuthorized(true);
+  //       }
+  //     } catch {
+  //       router.replace("/login?next=/admin");
+  //     } finally {
+  //       if (!cancelled) {
+  //         setIsCheckingAuth(false);
+  //       }
+  //     }
+  //   }
 
-    checkAdmin();
+  //   checkAdmin();
 
-    return () => {
-      cancelled = true;
-    };
-  }, [router]);
+  //   return () => {
+  //     cancelled = true;
+  //   };
+  // }, [router]);
 
   // --- HANDLER: REFRESH ---
   const handleRefresh = () => {
@@ -194,17 +194,17 @@ export default function AdminClient({
     }
   };
 
-  if (isCheckingAuth) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-zinc-400">
-        Verifying admin access…
-      </div>
-    );
-  }
+  // if (isCheckingAuth) {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center text-zinc-400">
+  //       Verifying admin access…
+  //     </div>
+  //   );
+  // }
 
-  if (!isAuthorized) {
-    return null; // Redirect already triggered
-  }
+  // if (!isAuthorized) {
+  //   return null; // Redirect already triggered
+  // }
 
   return (
     <div className="space-y-6">
