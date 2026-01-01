@@ -18,9 +18,20 @@ export default function proxy(request: NextRequest) {
   }
 
   // 2️⃣ Login page (THE FIX)
-  if (pathname === "/login" && session?.value) {
-    const nextUrl = searchParams.get("next") ?? "/nightchecking";
-    return NextResponse.redirect(new URL(nextUrl, request.url));
+  if (pathname === "/login") {
+    if (session?.value) {
+      const nextUrl = searchParams.get("next");
+
+      // ONLY redirect if next exists
+      if (nextUrl) {
+        return NextResponse.redirect(new URL(nextUrl, request.url));
+      }
+
+      // Otherwise allow page to load
+      return NextResponse.next();
+    }
+
+    return NextResponse.next();
   }
 
   // 3️⃣ Protected pages (Nightchecking)
