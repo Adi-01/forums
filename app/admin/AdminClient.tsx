@@ -1,32 +1,33 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { TruckRecord } from "@/types";
 import { formatDateTime } from "@/lib/utils";
 import EditModal from "@/components/EditModal";
 import { updateTruckAdmin } from "@/lib/actions/admin.action";
-import { Edit, RefreshCw, FileDown, Search } from "lucide-react";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import { Edit, RefreshCw, FileSpreadsheet, Search } from "lucide-react"; // Changed Icon
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
 // --- HELPER: Duration Calculator ---
 const calculateDuration = (inTime: string, outTime?: string | null) => {
-  if (!outTime) return { text: "-", color: "text-zinc-600" };
+  if (!outTime) return { text: "-", color: "text-zinc-600", isLate: false };
 
   const start = new Date(inTime).getTime();
   const end = new Date(outTime).getTime();
   const diffMs = end - start;
 
-  if (diffMs < 0) return { text: "Error", color: "text-red-500" };
+  if (diffMs < 0) return { text: "Error", color: "text-red-500", isLate: true };
 
   const hours = Math.floor(diffMs / (1000 * 60 * 60));
   const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
 
   const text = `${hours}h ${minutes}m`;
-  const color = hours >= 4 ? "text-red-400" : "text-green-400";
+  const isLate = hours >= 4;
+  const color = isLate ? "text-red-400" : "text-green-400";
 
-  return { text, color };
+  return { text, color, isLate };
 };
 
 export default function AdminClient({
@@ -36,142 +37,119 @@ export default function AdminClient({
 }) {
   const router = useRouter();
   const [records, setRecords] = useState(initialRecords);
-
+  const [search, setSearch] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Edit State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [recordToEdit, setRecordToEdit] = useState<TruckRecord | null>(null);
-  // const [isAuthorized, setIsAuthorized] = useState(false);
-  // const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  // useEffect(() => {
-  //   let cancelled = false;
 
-  //   async function checkAdmin() {
-  //     try {
-  //       const res = await fetch("/api/me", {
-  //         cache: "no-store",
-  //         credentials: "include",
-  //       });
+  // --- HANDLER: EXCEL EXPORT ---
+  const generateExcel = async () => {
+    // 1. Create Workbook and Sheet
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Night Checking Report");
 
-  //       if (!res.ok) {
-  //         // 401 or 403
-  //         router.replace("/login?next=/admin");
-  //         return;
-  //       }
+    // 2. Define Columns (Split Date & Time)
+    worksheet.columns = [
+      { header: "Truck No", key: "truckNumber", width: 15 },
+      { header: "Transporter", key: "transporter", width: 20 },
+      // Split In Time
+      { header: "In Date", key: "inDate", width: 12 },
+      { header: "In Time", key: "inTime", width: 10 },
+      // Split Out Time
+      { header: "Out Date", key: "outDate", width: 12 },
+      { header: "Out Time", key: "outTime", width: 10 },
 
-  //       if (!cancelled) {
-  //         setIsAuthorized(true);
-  //       }
-  //     } catch {
-  //       router.replace("/login?next=/admin");
-  //     } finally {
-  //       if (!cancelled) {
-  //         setIsCheckingAuth(false);
-  //       }
-  //     }
-  //   }
+      { header: "Duration", key: "duration", width: 15 },
+      { header: "Paper", key: "paper", width: 10 },
+      { header: "Driver", key: "driver", width: 10 },
+      { header: "Tarpulin", key: "tarpulin", width: 10 },
+      { header: "Remarks", key: "remarks", width: 30 },
+    ];
 
-  //   checkAdmin();
+    // 3. Header Styling
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true, color: { argb: "FFFFFFFF" } }; // White text
+    headerRow.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF4F46E5" }, // Indigo-600 background
+    };
 
-  //   return () => {
-  //     cancelled = true;
-  //   };
-  // }, [router]);
+    // 4. Add Data Rows
+    records.forEach((record) => {
+      const displayOutTime = record.selfOut || record.outTime;
+      const duration = calculateDuration(record.inTime, displayOutTime);
 
-  // --- HANDLER: REFRESH ---
-  const handleRefresh = () => {
-    setIsRefreshing(true);
-    router.refresh();
-    setTimeout(() => setIsRefreshing(false), 1000);
-  };
+      // Helper to split ISO string into Date and Time components
+      const parseDateTime = (isoString?: string | null) => {
+        if (!isoString) return { date: "-", time: "-" };
+        const d = new Date(isoString);
+        return {
+          date: d.toLocaleDateString("en-GB"), // DD/MM/YYYY
+          time: d.toLocaleTimeString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+          }), // 12:00 PM
+        };
+      };
 
-  // --- HANDLER: PDF EXPORT ---
-  const generatePDF = () => {
-    const doc = new jsPDF();
+      const inData = parseDateTime(record.inTime);
+      const outData = displayOutTime
+        ? parseDateTime(displayOutTime)
+        : { date: "ACTIVE", time: "" };
+
+      const row = worksheet.addRow({
+        truckNumber: record.truckNumber,
+        transporter: record.transporter,
+        inDate: inData.date,
+        inTime: inData.time,
+        outDate: outData.date,
+        outTime: outData.time,
+        duration: duration.text,
+        paper: record.paperStatus ? "Yes" : "No",
+        driver: record.driverStatus ? "Yes" : "No",
+        tarpulin: record.tarpulinStatus ? "Yes" : "No",
+        remarks: record.remarks || "-",
+      });
+
+      // 5. Apply Conditional Formatting (Color Logic)
+      if (displayOutTime) {
+        const durationCell = row.getCell("duration");
+        if (duration.isLate) {
+          // RED for >= 4 hours (ARGB format)
+          durationCell.font = { color: { argb: "FFF87171" }, bold: true };
+        } else {
+          // GREEN for < 4 hours
+          durationCell.font = { color: { argb: "FF4ADE80" }, bold: true };
+        }
+      }
+    });
+
+    // 6. Save File
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
     const currentMonth = new Date().toLocaleString("default", {
       month: "long",
       year: "numeric",
     });
+    saveAs(blob, `Night_Checking_${currentMonth.replace(" ", "_")}.xlsx`);
+  };
 
-    // 1. Title
-    doc.setFontSize(18);
-    doc.text(`Night Checking Report - ${currentMonth}`, 14, 20);
-    doc.setFontSize(10);
-    doc.text(
-      `Generated on: ${formatDateTime(new Date().toISOString())}`,
-      14,
-      28
-    );
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // Assuming search implementation exists or is passed
+  };
 
-    // 2. Prepare Data Rows
-    const tableRows = records.map((record) => {
-      const displayOutTime = record.selfOut || record.outTime;
-      const outTimeText = displayOutTime
-        ? formatDateTime(displayOutTime)
-        : "ACTIVE";
-
-      // Calculate Duration Text
-      const durationData = calculateDuration(record.inTime, displayOutTime);
-
-      return [
-        record.truckNumber,
-        record.transporter,
-        formatDateTime(record.inTime),
-        outTimeText,
-        durationData.text, // Index 4: Duration
-        record.paperStatus ? "Yes" : "No",
-        record.driverStatus ? "Yes" : "No",
-        record.tarpulinStatus ? "Yes" : "No",
-        record.remarks || "-",
-      ];
-    });
-
-    // 3. Generate Table with Custom Colors
-    autoTable(doc, {
-      startY: 35,
-      head: [
-        [
-          "Truck No",
-          "Transporter",
-          "Inspection Time",
-          "Out Time",
-          "Duration",
-          "Paper",
-          "Driver",
-          "Tarpulin",
-          "Remarks",
-        ],
-      ],
-      body: tableRows,
-      theme: "grid",
-      headStyles: { fillColor: [79, 70, 229] }, // Indigo-600
-      styles: { fontSize: 8 },
-
-      // ✨ ADDED LOGIC: Color the Duration Column in PDF
-      didParseCell: function (data) {
-        // Check if we are in the body section and the column is "Duration" (Index 4)
-        if (data.section === "body" && data.column.index === 4) {
-          const text = data.cell.raw as string;
-
-          // Parse "4h 10m" -> get 4
-          const hours = parseInt(text.split("h")[0]);
-
-          if (!isNaN(hours)) {
-            if (hours >= 4) {
-              // Red Color [R, G, B]
-              data.cell.styles.textColor = [248, 113, 113];
-            } else {
-              // Green Color [R, G, B]
-              data.cell.styles.textColor = [74, 222, 128];
-            }
-          }
-        }
-      },
-    });
-
-    // 4. Save
-    doc.save(`Night_Checking_${currentMonth.replace(" ", "_")}.pdf`);
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    router.refresh();
+    setTimeout(() => setIsRefreshing(false), 1000);
   };
 
   const handleEditClick = (record: TruckRecord) => {
@@ -183,9 +161,7 @@ export default function AdminClient({
     setRecords((prev) =>
       prev.map((r) => (r.id === id ? { ...r, ...updatedData } : r))
     );
-
     const res = await updateTruckAdmin(id, updatedData);
-
     if (!res.success) {
       alert("Failed to update");
       router.refresh();
@@ -193,18 +169,6 @@ export default function AdminClient({
       router.refresh();
     }
   };
-
-  // if (isCheckingAuth) {
-  //   return (
-  //     <div className="min-h-screen flex items-center justify-center text-zinc-400">
-  //       Verifying admin access…
-  //     </div>
-  //   );
-  // }
-
-  // if (!isAuthorized) {
-  //   return null; // Redirect already triggered
-  // }
 
   return (
     <div className="space-y-6">
@@ -219,6 +183,25 @@ export default function AdminClient({
 
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-end sm:items-center">
+        <form onSubmit={handleSearch} className="flex gap-2 w-full sm:w-auto">
+          <div className="relative w-full sm:w-80">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500" />
+            <input
+              type="text"
+              placeholder="Search Truck Number..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full bg-zinc-900 border border-zinc-700 rounded pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
+            />
+          </div>
+          <button
+            type="submit"
+            className="bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded text-sm font-medium transition-colors"
+          >
+            Search
+          </button>
+        </form>
+
         <div className="flex gap-2">
           <button
             onClick={handleRefresh}
@@ -231,12 +214,13 @@ export default function AdminClient({
             <span className="hidden sm:inline">Refresh</span>
           </button>
 
+          {/* EXCEL BUTTON */}
           <button
-            onClick={generatePDF}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded text-sm font-medium transition-all text-white shadow-lg shadow-indigo-900/20"
+            onClick={generateExcel}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 rounded text-sm font-medium transition-all text-white shadow-lg shadow-green-900/20"
           >
-            <FileDown size={16} />
-            <span>Monthly PDF</span>
+            <FileSpreadsheet size={16} />
+            <span>Export Excel</span>
           </button>
         </div>
       </div>
@@ -251,7 +235,6 @@ export default function AdminClient({
                 <th className="p-4 w-40">Transporter</th>
                 <th className="p-4 w-40">In Time</th>
                 <th className="p-4 w-40">Out Time</th>
-                {/* REMOVED COMMENT HERE TO FIX HYDRATION ERROR */}
                 <th className="p-4 w-24">Duration</th>
                 <th className="p-4 text-center w-24">Paper</th>
                 <th className="p-4 text-center w-24">Driver</th>

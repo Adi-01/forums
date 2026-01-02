@@ -23,7 +23,7 @@ export async function getDashboardData() {
         Query.orderDesc("$createdAt"),
         // CRITICAL WARNING: This limit might be hiding your "Inside" trucks!
         // See explanation below code block.
-        Query.limit(50),
+        Query.limit(20),
       ],
     });
 

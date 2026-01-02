@@ -3,9 +3,9 @@
 import { ID } from "node-appwrite";
 import { createAdminClient, createSessionClient } from "@/lib/appwrite"; // Adjust path to your client
 import { appwriteConfig } from "@/lib/appwrite/config"; // Adjust path to your config
-import { formatVehicleNumber } from "../utils";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { formatVehicleNumber } from "@/lib/utils";
 
 // Type definition for the data coming from the frontend form
 type CreateEntryParams = {

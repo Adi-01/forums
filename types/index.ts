@@ -12,3 +12,12 @@ export type TruckRecord = {
   outTime?: string;
   selfOut?: string;
 };
+
+export type KajliTruckEntry = {
+  id: string;
+  truckNumber: string;
+  godownNumber: number;
+  loadingStatus: "IN" | "OUT";
+  truckStatus: "IN-COMPLETE" | "OUT-COMPLETE";
+  cargoType: string;
+};

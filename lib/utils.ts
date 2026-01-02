@@ -1,9 +1,16 @@
-import { type ClassValue, clsx } from "clsx";
+import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+// Helper to format/sanitize inputs
+export function formatVehicleNumber(input: string): string {
+  if (!input) return "";
+  return input.toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
 // --- Helpers ---
 export const formatDateTime = (dateStr: string | null) => {
   if (!dateStr) return "-";
@@ -19,10 +26,3 @@ export const formatDateTime = (dateStr: string | null) => {
     timeZone: "Asia/Kolkata", // <- ensures same string on server and client
   });
 };
-
-export function formatVehicleNumber(input: string): string {
-  if (!input) return "";
-  // 1. Convert to Uppercase
-  // 2. Replace all non-alphanumeric characters (spaces, dashes, dots) with empty string
-  return input.toUpperCase().replace(/[^A-Z0-9]/g, "");
-}

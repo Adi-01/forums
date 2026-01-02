@@ -5,12 +5,7 @@ import { createAdminClient } from "@/lib/appwrite";
 import { appwriteConfig } from "@/lib/appwrite/config";
 import { revalidatePath } from "next/cache";
 import { TruckRecord } from "@/types";
-
-// Helper to format/sanitize inputs
-function formatVehicleNumber(input: string): string {
-  if (!input) return "";
-  return input.toUpperCase().replace(/[^A-Z0-9]/g, "");
-}
+import { formatVehicleNumber } from "../utils";
 
 // 1. FETCH ALL ENTRIES (For Admin Table)
 export async function getAllTrucks(search?: string) {
