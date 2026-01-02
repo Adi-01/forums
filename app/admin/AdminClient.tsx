@@ -37,7 +37,6 @@ export default function AdminClient({
 }) {
   const router = useRouter();
   const [records, setRecords] = useState(initialRecords);
-  const [search, setSearch] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Edit State
@@ -183,25 +182,6 @@ export default function AdminClient({
 
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-end sm:items-center">
-        <form onSubmit={handleSearch} className="flex gap-2 w-full sm:w-auto">
-          <div className="relative w-full sm:w-80">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500" />
-            <input
-              type="text"
-              placeholder="Search Truck Number..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-zinc-900 border border-zinc-700 rounded pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
-            />
-          </div>
-          <button
-            type="submit"
-            className="bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded text-sm font-medium transition-colors"
-          >
-            Search
-          </button>
-        </form>
-
         <div className="flex gap-2">
           <button
             onClick={handleRefresh}
