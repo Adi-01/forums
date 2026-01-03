@@ -1,8 +1,9 @@
 import { Suspense } from "react";
+import Link from "next/link"; // Import Link
+import { PlusCircle } from "lucide-react"; // Import Icon
 import { getKajliTruckEntries } from "@/lib/actions/kajli.actions";
 import KajliEntryList from "@/components/KajliEntryList";
 
-// 1. Update the type: searchParams is a Promise
 type PageProps = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
@@ -22,6 +23,7 @@ export default async function KajliPage({ searchParams }: PageProps) {
   return (
     <main className="min-h-screen bg-zinc-950 p-6 flex flex-col items-center">
       <div className="w-full max-w-5xl space-y-8">
+        {/* --- Header Section --- */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-zinc-800 pb-6">
           <div>
             <h1 className="text-3xl font-bold text-zinc-100 tracking-tight">
@@ -31,6 +33,15 @@ export default async function KajliPage({ searchParams }: PageProps) {
               Manage truck entries and logistics flow.
             </p>
           </div>
+
+          {/* --- New Entry Button --- */}
+          <Link
+            href="/kajli"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors shadow-lg shadow-blue-900/20"
+          >
+            <PlusCircle className="w-4 h-4" />
+            New Entry
+          </Link>
         </div>
 
         <Suspense

@@ -135,6 +135,9 @@ export default function KajliEntryList({
                   <TableHead className="w-[15%] text-center text-zinc-400 font-medium">
                     Cargo
                   </TableHead>
+                  <TableHead className="w-[15%] text-center text-zinc-400 font-medium">
+                    Bags
+                  </TableHead>
                   <TableHead className="w-[20%] text-center text-zinc-400 font-medium">
                     Loading Status
                   </TableHead>
@@ -187,6 +190,15 @@ export default function KajliEntryList({
                           className="border-zinc-700 text-zinc-300 bg-zinc-950/50 hover:bg-zinc-800"
                         >
                           {item.cargoType}
+                        </Badge>
+                      </TableCell>
+                      {/* Center Aligned Cargo */}
+                      <TableCell className="text-center">
+                        <Badge
+                          variant="outline"
+                          className="border-zinc-700 text-zinc-300 bg-zinc-950/50 hover:bg-zinc-800"
+                        >
+                          {item.bags}
                         </Badge>
                       </TableCell>
 

@@ -4,6 +4,13 @@ import { ID, Query } from "node-appwrite";
 import { createAdminClient } from "@/lib/appwrite"; // Adjust path as needed
 import { appwriteConfig } from "@/lib/appwrite/config"; // Adjust path as needed
 import { formatVehicleNumber } from "@/lib/utils"; // Adjust path if needed
+import { revalidatePath } from "next/cache";
+export type GodownData = {
+  id: number;
+  lsa: { bags: number; mt: number };
+  dsa: { bags: number; mt: number };
+  rbc: { bags: number; mt: number };
+};
 
 // We exclude 'id' because Appwrite generates it
 export type KajliTruckEntries = {
@@ -14,6 +21,7 @@ export type KajliTruckEntries = {
   truckStatus: string;
   cargoType: string;
   createdAt?: string;
+  bags: number;
 };
 
 export async function createKajliTruckEntry(data: KajliTruckEntries) {
@@ -34,6 +42,7 @@ export async function createKajliTruckEntry(data: KajliTruckEntries) {
         LoadingStatus: data.loadingStatus,
         TruckStatus: data.truckStatus,
         CargoType: data.cargoType,
+        Bags: data.bags,
       },
     });
 
@@ -93,6 +102,7 @@ export async function getKajliTruckEntries(date?: Date) {
       truckStatus: doc.TruckStatus,
       cargoType: doc.CargoType,
       createdAt: doc.$createdAt,
+      bags: doc.Bags,
     }));
 
     return {
@@ -105,6 +115,150 @@ export async function getKajliTruckEntries(date?: Date) {
       success: false,
       data: [],
       error: error?.message || "Failed to fetch entries",
+    };
+  }
+}
+
+export type SummaryResult = {
+  success: boolean;
+  data: GodownData[];
+  error?: string;
+};
+
+// --- Helper: MT Conversion (20 Bags = 1 MT) ---
+const calculateMT = (bags: number) => Number((bags * 0.05).toFixed(3));
+const FIXED_GODOWN_IDS = [1, 2, 3, 4, 5, 6, 8, 9, 10, 11];
+
+export async function getGodownStockSummary(): Promise<SummaryResult> {
+  try {
+    // 1. Initialize Client
+    const { tables } = await createAdminClient();
+
+    // 2. Define Queries (Don't await them yet!)
+    // We explicitly select ONLY the columns we need to save bandwidth (Network Optimization)
+    const truckPromise = tables.listRows({
+      databaseId: appwriteConfig.databaseId,
+      tableId: "kajli_truck_entry",
+      queries: [
+        Query.limit(5000), // Max limit to reduce pagination calls
+        Query.select(["GodownNumber", "CargoType", "Bags"]), // Bandwidth Saver: Fetch only 3 small fields
+      ],
+    });
+
+    const adjPromise = tables.listRows({
+      databaseId: appwriteConfig.databaseId,
+      tableId: "adjustment_table",
+      queries: [
+        Query.limit(5000),
+        Query.select(["GodownNumber", "CargoType", "Bags"]), // Bandwidth Saver
+      ],
+    });
+
+    // 3. Execute in Parallel (Speed Optimization)
+    // This waits for the *slowest* request, rather than the sum of both
+    const [truckRes, adjRes] = await Promise.all([truckPromise, adjPromise]);
+
+    // 4. Initialize Map (Pre-fill)
+    const godownMap = new Map<number, GodownData>();
+
+    FIXED_GODOWN_IDS.forEach((id) => {
+      godownMap.set(id, {
+        id,
+        lsa: { bags: 0, mt: 0 },
+        dsa: { bags: 0, mt: 0 },
+        rbc: { bags: 0, mt: 0 },
+      });
+    });
+
+    const getGodown = (id: number) => {
+      if (!godownMap.has(id)) return null;
+      return godownMap.get(id)!;
+    };
+
+    // 5. Shared Processing Logic
+    // Since the structure of both results is identical (thanks to Query.select),
+    // we can use a single helper to process both arrays.
+    const processRows = (rows: any[]) => {
+      rows.forEach((row) => {
+        const gdNum = Number(row.GodownNumber);
+        const cargo = row.CargoType ? row.CargoType.toLowerCase() : "";
+
+        let bags = Number(row.Bags);
+        if (isNaN(bags) || row.Bags === null) bags = 0;
+
+        if (!gdNum || !cargo) return;
+
+        const currentGd = getGodown(gdNum);
+        if (!currentGd) return;
+
+        if (cargo === "lsa") currentGd.lsa.bags += bags;
+        else if (cargo === "dsa") currentGd.dsa.bags += bags;
+        else if (cargo === "rbc") currentGd.rbc.bags += bags;
+      });
+    };
+
+    // Process both datasets
+    processRows(truckRes.rows);
+    processRows(adjRes.rows);
+
+    // 6. Final Sort
+    const finalData: GodownData[] = Array.from(godownMap.values())
+      .map((gd) => ({
+        ...gd,
+        lsa: { bags: gd.lsa.bags, mt: calculateMT(gd.lsa.bags) },
+        dsa: { bags: gd.dsa.bags, mt: calculateMT(gd.dsa.bags) },
+        rbc: { bags: gd.rbc.bags, mt: calculateMT(gd.rbc.bags) },
+      }))
+      .sort((a, b) => a.id - b.id);
+
+    return {
+      success: true,
+      data: finalData,
+    };
+  } catch (error: any) {
+    console.error("Error calculating stock summary:", error);
+    return {
+      success: false,
+      data: [],
+      error: error?.message || "Failed to calculate stock summary",
+    };
+  }
+}
+
+// --- Types ---
+export type CreateAdjustmentParams = {
+  godownNumber: number;
+  cargoType: string;
+  quantity: number; // Can be positive (add) or negative (subtract)
+};
+
+export async function createStockAdjustment(params: CreateAdjustmentParams) {
+  try {
+    const { databases } = await createAdminClient();
+
+    // 1. Create the Document
+    const result = await databases.createDocument(
+      appwriteConfig.databaseId,
+      "adjustment_table", // Replace with your actual Adjustment Table ID if different
+      ID.unique(),
+      {
+        // These keys must match your Appwrite Database Attributes exactly
+        GodownNumber: params.godownNumber,
+        CargoType: params.cargoType,
+        Bags: params.quantity,
+      }
+    );
+
+    // 2. Revalidate Cache
+    // This forces the "Godown Summary" page to reload data next time it's visited
+    revalidatePath("/kajli/godownsummary");
+
+    return { success: true, data: result };
+  } catch (error: any) {
+    console.error("Error creating adjustment:", error);
+    return {
+      success: false,
+      error: error?.message || "Failed to create adjustment",
     };
   }
 }
