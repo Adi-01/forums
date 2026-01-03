@@ -26,3 +26,25 @@ export const formatDateTime = (dateStr: string | null) => {
     timeZone: "Asia/Kolkata", // <- ensures same string on server and client
   });
 };
+const LATE_THRESHOLD_MS = 14700000;
+
+export const calculateDuration = (inTime: string, outTime?: string | null) => {
+  if (!outTime)
+    return { text: "-", color: "text-zinc-600", isLate: false, diffMs: 0 };
+
+  const start = new Date(inTime).getTime();
+  const end = new Date(outTime).getTime();
+  const diffMs = end - start;
+
+  if (diffMs < 0)
+    return { text: "Error", color: "text-red-500", isLate: true, diffMs: 0 };
+
+  const hours = Math.floor(diffMs / (1000 * 60 * 60));
+  const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+  const text = `${hours}h ${minutes}m`;
+  const isLate = diffMs > LATE_THRESHOLD_MS;
+  const color = isLate ? "text-red-400" : "text-green-400";
+
+  return { text, color, isLate, diffMs };
+};

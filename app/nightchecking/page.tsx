@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import StatusToggle from "@/components/StatusToggle";
 import { createTruckEntry } from "@/lib/actions/user.actions";
@@ -17,8 +16,6 @@ import {
 } from "lucide-react";
 
 export default function EntryPage() {
-  const router = useRouter();
-
   // Form State
   const [truckNumber, setTruckNumber] = useState("");
   const [transporter, setTransporter] = useState("");
@@ -223,7 +220,7 @@ export default function EntryPage() {
                   rows={3}
                   placeholder="Any observations, damage reports, or specific notes..."
                   disabled={isSubmitting}
-                  className="flex min-h-[80px] w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 resize-y transition-all"
+                  className="flex min-h-20 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 resize-y transition-all"
                 />
               </div>
             </div>
