@@ -229,7 +229,7 @@ export default function DashboardClient({
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="flex items-center gap-3 px-4 py-3 rounded-lg text-blue-400 bg-blue-950/20 border border-blue-900/30"
               >
-                <LayoutDashboard size={18} /> Kajli Dashboard
+                <LayoutDashboard size={18} /> Kajli
               </Link>
 
               <div className="mt-auto pt-8">
