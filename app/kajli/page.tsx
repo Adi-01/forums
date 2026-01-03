@@ -37,6 +37,13 @@ export default async function KajliEntryPage() {
               <ClipboardList className="h-4 w-4" />
               Entry Logs
             </Link>
+            <Link
+              href="/nightchecking"
+              className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50 transition-all"
+            >
+              <ClipboardList className="h-4 w-4" />
+              Night Checking
+            </Link>
 
             {/* 2. Godown Summary (ADMIN ONLY) */}
             {isAdmin && (
